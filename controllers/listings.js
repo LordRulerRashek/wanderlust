@@ -31,30 +31,37 @@ module.exports.showListing = async(req,res)=>{
     res.render("listings/show.ejs", { listing });
 };
 
-module.exports.createListing = async(req, res, next)=>{
+module.exports.createListing = async (req, res, next) => {
+    try{
     const location = req.body.listing.location; // Specify the location
     const uri = `https://www.gps-coordinates.net/api/${location}`;
 
-        const response = await axios.get(uri);
-        const { latitude, longitude } = response.data;
-        console.log(latitude,longitude);
-        // res.render('location', { latitude, longitude });
-    
+    const response = await axios.get(uri);
+    const { latitude, longitude } = response.data;
+    console.log(latitude, longitude);
+    // res.render('location', { latitude, longitude });
+
     let url = req.file.path;
     let filename = req.file.filename;
 
 
     const newListing = new Listing(req.body.listing);
     newListing.owner = req.user._id;
-    newListing.image = {url, filename};
+    newListing.image = { url, filename };
 
-    newListing.geometry = { type: 'Point', coordinates: [latitude,longitude]};
+    newListing.geometry = { type: 'Point', coordinates: [latitude, longitude] };
 
     let savedListing = await newListing.save();
     console.log(savedListing);
-    req.flash("success","New Listing Created!")
-    res.redirect("/listings");  
+    req.flash("success", "New Listing Created!")
+    res.redirect("/listings");
+} catch (error) 
+{ console.error('Error creating listing:', error); 
+    req.flash('error', 'Failed to create listing'); 
+    res.redirect('/listings/new'); 
+} 
 };
+
 
 module.exports.renderEditForm = async(req,res)=>{
     let {id} = req.params;
